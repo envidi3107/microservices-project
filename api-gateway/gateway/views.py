@@ -17,6 +17,16 @@ def book_list(request):
 def view_cart(request, customer_id):
     r = requests.get(f"{CART_SERVICE_URL}/carts/{customer_id}/")
     items = r.json() if r.ok else []
+
+    # Enrich items with book details
+    books_resp = requests.get(f"{BOOK_SERVICE_URL}/books/")
+    books_by_id = {}
+    if books_resp.ok:
+        books_by_id = {b["id"]: b for b in books_resp.json()}
+
+    for item in items:
+        item["book"] = books_by_id.get(item["book_id"], {})
+
     return render(request, "cart.html", {"items": items, "customer_id": customer_id})
 
 

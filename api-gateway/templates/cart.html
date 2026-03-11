@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BookStore – Your Cart</title>
   <style>
-    /* ---------- Reset ---------- */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #222; }
     a { text-decoration: none; color: inherit; }
 
-    /* ---------- Navbar ---------- */
     nav {
       background: #1a1a2e;
       color: #fff;
@@ -20,54 +18,89 @@
       height: 60px;
       gap: 32px;
     }
-    nav .brand { font-size: 1.2rem; font-weight: 700; margin-right: auto; letter-spacing: 0.5px; }
+    nav .brand { font-size: 1.2rem; font-weight: 700; margin-right: auto; }
     nav a { font-size: 0.95rem; color: #c9d1d9; transition: color 0.15s; }
-    nav a:hover { color: #fff; }
-    nav a.active { color: #fff; border-bottom: 2px solid #6c63ff; padding-bottom: 2px; }
+    nav a:hover, nav a.active { color: #fff; }
+    nav a.active { border-bottom: 2px solid #6c63ff; padding-bottom: 3px; }
 
-    /* ---------- Page layout ---------- */
     main { max-width: 760px; margin: 36px auto; padding: 0 20px; }
-    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 24px; color: #1a1a2e; }
 
-    /* ---------- Cart list ---------- */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .page-header h1 { font-size: 1.6rem; font-weight: 700; color: #1a1a2e; }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid #d0d0d0;
+      color: #555;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+    .btn-back:hover { background: #f0f0f0; color: #222; border-color: #aaa; }
+
     .cart-list { display: flex; flex-direction: column; gap: 14px; }
 
     .cart-item {
       background: #fff;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
-      display: flex;
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
       align-items: center;
       gap: 16px;
       padding: 16px 20px;
-      transition: box-shadow 0.2s;
+      transition: box-shadow 0.15s;
     }
     .cart-item:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
 
     .cart-item-icon {
-      font-size: 2rem;
-      width: 48px;
-      text-align: center;
+      background: linear-gradient(135deg, #6c63ff 0%, #3f3d56 100%);
+      border-radius: 8px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
       flex-shrink: 0;
     }
 
-    .cart-item-info { flex: 1; }
-    .cart-item-name { font-size: 0.95rem; font-weight: 600; }
-    .cart-item-meta { font-size: 0.8rem; color: #888; margin-top: 3px; }
+    .cart-item-info { min-width: 0; }
+    .cart-item-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cart-item-author { font-size: 0.8rem; color: #777; margin-top: 3px; }
+    .cart-item-price { font-size: 0.9rem; color: #6c63ff; font-weight: 600; margin-top: 6px; }
 
-    .cart-item-qty {
+    .cart-item-right { text-align: right; flex-shrink: 0; }
+    .cart-qty {
       background: #f0eeff;
       color: #6c63ff;
       font-weight: 700;
-      font-size: 0.9rem;
-      padding: 6px 16px;
+      font-size: 0.88rem;
+      padding: 5px 14px;
       border-radius: 20px;
       white-space: nowrap;
     }
+    .cart-subtotal { font-size: 0.78rem; color: #888; margin-top: 5px; }
 
-    /* ---------- Cart summary ---------- */
     .cart-summary {
-      margin-top: 28px;
+      margin-top: 24px;
       background: #fff;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
@@ -76,8 +109,8 @@
       justify-content: space-between;
       align-items: center;
     }
-    .cart-summary .total-label { font-size: 1rem; color: #555; }
-    .cart-summary .total-items { font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+    .total-label { font-size: 0.9rem; color: #666; }
+    .total-count { font-size: 1.3rem; font-weight: 700; color: #1a1a2e; margin-top: 2px; }
 
     .btn-checkout {
       background: #6c63ff;
@@ -92,9 +125,7 @@
     }
     .btn-checkout:hover { background: #574fd6; }
 
-    /* ---------- Empty state ---------- */
     .empty { text-align: center; padding: 80px 0; color: #888; }
-    .empty a { color: #6c63ff; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -102,22 +133,39 @@
 <nav>
   <span class="brand">📚 BookStore</span>
   <a href="/books/">Books</a>
-  <a href="#" class="active">Cart</a>
+  <a href="#" class="active">🛒 Cart</a>
 </nav>
 
 <main>
-  <h1>🛒 Your Cart</h1>
+  <div class="page-header">
+    <a class="btn-back" href="/books/">← Back to Books</a>
+    <h1>🛒 Your Cart</h1>
+  </div>
 
   {% if items %}
     <div class="cart-list">
       {% for item in items %}
       <div class="cart-item">
-        <div class="cart-item-icon">📦</div>
+        <div class="cart-item-icon">📖</div>
         <div class="cart-item-info">
-          <div class="cart-item-name">Book #{{ item.book_id }}</div>
-          <div class="cart-item-meta">Item ID: {{ item.id }}</div>
+          <div class="cart-item-title">
+            {% if item.book.title %}{{ item.book.title }}{% else %}Book #{{ item.book_id }}{% endif %}
+          </div>
+          {% if item.book.author %}
+            <div class="cart-item-author">{{ item.book.author }}</div>
+          {% endif %}
+          {% if item.book.price %}
+            <div class="cart-item-price">${{ item.book.price }}</div>
+          {% endif %}
         </div>
-        <div class="cart-item-qty">Qty: {{ item.quantity }}</div>
+        <div class="cart-item-right">
+          <div class="cart-qty">× {{ item.quantity }}</div>
+          {% if item.book.price %}
+            <div class="cart-subtotal">
+              Subtotal: ${% widthratio item.quantity 1 item.book.price %}
+            </div>
+          {% endif %}
+        </div>
       </div>
       {% endfor %}
     </div>
@@ -125,14 +173,14 @@
     <div class="cart-summary">
       <div>
         <div class="total-label">Items in cart</div>
-        <div class="total-items">{{ items|length }} item{{ items|length|pluralize }}</div>
+        <div class="total-count">{{ items|length }} item{{ items|length|pluralize }}</div>
       </div>
       <button class="btn-checkout">Checkout</button>
     </div>
   {% else %}
     <div class="empty">
       <div style="font-size:3.5rem">🛍️</div>
-      <p style="margin-top:12px; font-size:1rem">Your cart is empty. <a href="/books/">Browse books →</a></p>
+      <p style="margin-top:12px; font-size:1rem">Your cart is empty. <a href="/books/" style="color:#6c63ff;font-weight:600">Browse books →</a></p>
     </div>
   {% endif %}
 </main>
