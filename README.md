@@ -63,3 +63,20 @@ bookstore-microservice/
 ├── setup.bat            # Setup venv (Windows)
 └── setup.sh             # Setup venv (Mac/Linux)
 ```
+
+
+---
+
+## Chạy với Kubernetes
+
+```bash
+kubectl apply -f k8s-manifest.yaml
+```
+
+// lấy danh sách các pod bao gồm cả ip của pod
+kubectl get pods -o wide
+
+// forward port của service
+kubectl port-forward svc/api-gateway 8000:80
+
+

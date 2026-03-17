@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - BookStore</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #222; }
+    a { text-decoration: none; color: inherit; }
+
+    nav {
+      background: #1a1a2e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+      height: 60px;
+      gap: 32px;
+    }
+    nav .brand { font-size: 1.2rem; font-weight: 700; margin-right: auto; }
+    nav a { font-size: 0.95rem; color: #c9d1d9; transition: color 0.15s; }
+    nav a:hover, nav a.active { color: #fff; }
+
+    main { max-width: 800px; margin: 36px auto; padding: 0 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px;}
+    
+    .card { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h1 { font-size: 1.5rem; margin-bottom: 20px; color: #1a1a2e; border-bottom: 2px solid #6c63ff; padding-bottom: 8px;}
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem;}
+    input[type="text"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+    button { display: block; width: 100%; background: #4f46e5; color: #fff; border: none; padding: 12px 20px; font-size: 1rem; border-radius: 4px; cursor: pointer; font-weight: 600; text-align: center; margin-top: 20px;}
+    button:hover { background: #4338ca; }
+    
+    .summary-item { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.9rem; color: #555;}
+    .summary-total { display: flex; justify-content: space-between; border-top: 1px solid #e0e0e0; padding-top: 12px; font-weight: 700; font-size: 1.1rem; color: #1a1a2e;}
+
+    .message { margin-bottom: 16px; padding: 10px; border-radius: 4px; }
+    .message.success { background: #e6ffed; color: #22863a; border: 1px solid #cce8ce; }
+    .message.error { background: #ffeef0; color: #cb2431; border: 1px solid #f2c7cb; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">📚 BookStore</span>
+  <a href="/books/">Books</a>
+  <a href="/cart/{{ customer_id }}/">🛒 Cart</a>
+  <a href="/dashboard/">⚙️ Dashboard</a>
+</nav>
+
+<main>
+  <div class="card" style="grid-column: 1 / 2;">
+    <h1>Checkout details</h1>
+    
+    {% if message %}
+      <div class="message {{ message_type }}">
+        {{ message }}
+        {% if message_type == 'success' %}
+          <div style="margin-top: 10px;">
+            <a href="/books/" style="text-decoration: underline;">Return to Home</a>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if not message_type == 'success' %}
+    <form method="POST" action="/checkout/{{ customer_id }}/">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="address">Shipping Address</label>
+        <input type="text" id="address" name="address" required placeholder="123 Main St, City, Country">
+      </div>
+      <div class="form-group">
+        <label for="shipping_method">Shipping Method</label>
+        <select id="shipping_method" name="shipping_method">
+            <option value="Standard">Standard Shipping (3-5 days)</option>
+            <option value="Express">Express Shipping (1-2 days)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-top: 30px;">
+        <label for="payment_method">Payment Method</label>
+        <select id="payment_method" name="payment_method">
+            <option value="Credit Card">Credit Card</option>
+            <option value="PayPal">PayPal</option>
+        </select>
+      </div>
+      <button type="submit">Place Order</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="card" style="grid-column: 2 / 3; align-self: start;">
+    <h1>Order Summary</h1>
+    {% for item in items %}
+        <div class="summary-item">
+            <span>{{ item.quantity }}x {{ item.book.title }}</span>
+            <span>${{ item.subtotal }}</span>
+        </div>
+    {% empty %}
+        <div class="summary-item">No items in cart.</div>
+    {% endfor %}
+    <div class="summary-total">
+        <span>Total</span>
+        <span>${{ total }}</span>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

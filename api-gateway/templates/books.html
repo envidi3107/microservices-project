@@ -97,6 +97,16 @@
       transition: background 0.15s;
     }
     .btn-cart:hover { background: #574fd6; }
+    .btn-detail {
+      background: #eef2ff;
+      color: #4f46e5;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .btn-detail:hover { background: #e0e7ff; }
 
     /* Toast notification */
     .toast {
@@ -123,6 +133,7 @@
   <span class="brand">📚 BookStore</span>
   <a href="/books/" class="active">Books</a>
   <a href="/cart/1/">🛒 Cart</a>
+  <a href="/dashboard/">⚙️ Dashboard</a>
 </nav>
 
 <main>
@@ -134,7 +145,7 @@
       <div class="book-card">
         <div class="book-cover">📖</div>
         <div class="book-body">
-          <div class="book-title">{{ book.title }}</div>
+          <div class="book-title"><a href="/books/{{ book.id }}/" style="color: inherit; text-decoration: none;">{{ book.title }}</a></div>
           <div class="book-author">{{ book.author }}</div>
           <span class="stock-badge {% if book.stock <= 5 %}low{% endif %}">
             {{ book.stock }} in stock
@@ -145,6 +156,7 @@
           <form class="add-cart-form" method="POST" action="/cart/add/">
             {% csrf_token %}
             <input type="hidden" name="book_id" value="{{ book.id }}">
+          <a href="/books/{{ book.id }}/" class="btn-detail">View Details</a>
             <input class="qty-input" type="number" name="quantity" value="1" min="1" max="{{ book.stock }}">
             <button class="btn-cart" type="submit">+ Cart</button>
           </form>

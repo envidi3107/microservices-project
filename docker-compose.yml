@@ -5,15 +5,28 @@ services:
     build: ./api-gateway
     ports:
       - "8000:8000"
+    volumes:
+      - ./api-gateway:/app
+    command: python manage.py runserver 0.0.0.0:8000
     depends_on:
       - customer-service
       - book-service
       - cart-service
+      - staff-service
+      - manager-service
+      - catalog-service
+      - order-service
+      - ship-service
+      - pay-service
+      - comment-rate-service
+      - recommender-ai-service
 
   customer-service:
     build: ./customer-service
     ports:
       - "8001:8000"
+    volumes:
+      - ./customer-service:/app
     depends_on:
       - postgres-customer
 
@@ -21,6 +34,8 @@ services:
     build: ./book-service
     ports:
       - "8002:8000"
+    volumes:
+      - ./book-service:/app
     depends_on:
       - postgres-book
 
@@ -28,6 +43,8 @@ services:
     build: ./cart-service
     ports:
       - "8003:8000"
+    volumes:
+      - ./cart-service:/app
     depends_on:
       - postgres-cart
 
@@ -39,8 +56,6 @@ services:
       POSTGRES_PASSWORD: 123456
     ports:
       - "5433:5432"
-    volumes:
-      - customer_data:/var/lib/postgresql/data
 
   postgres-book:
     image: postgres:15
@@ -64,7 +79,176 @@ services:
     volumes:
       - cart_data:/var/lib/postgresql/data
 
+    
+  staff-service:
+    build: ./staff-service
+    ports:
+      - "8004:8000"
+    volumes:
+      - ./staff-service:/app
+    depends_on:
+      - postgres-staff
+
+  manager-service:
+    build: ./manager-service
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./manager-service:/app
+    depends_on:
+      - postgres-manager
+
+  catalog-service:
+    build: ./catalog-service
+    ports:
+      - "8006:8000"
+    volumes:
+      - ./catalog-service:/app
+    depends_on:
+      - postgres-catalog
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8007:8000"
+    volumes:
+      - ./order-service:/app
+    depends_on:
+      - postgres-order
+
+  ship-service:
+    build: ./ship-service
+    ports:
+      - "8008:8000"
+    volumes:
+      - ./ship-service:/app
+    depends_on:
+      - postgres-ship
+
+  pay-service:
+    build: ./pay-service
+    ports:
+      - "8009:8000"
+    volumes:
+      - ./pay-service:/app
+    depends_on:
+      - postgres-pay
+
+  comment-rate-service:
+    build: ./comment-rate-service
+    ports:
+      - "8010:8000"
+    volumes:
+      - ./comment-rate-service:/app
+    depends_on:
+      - postgres-comment-rate
+
+  recommender-ai-service:
+    build: ./recommender-ai-service
+    ports:
+      - "8011:8000"
+    volumes:
+      - ./recommender-ai-service:/app
+    depends_on:
+      - postgres-recommender-ai
+
+  postgres-staff:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: staffdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5436:5432"
+    volumes:
+      - staff_data:/var/lib/postgresql/data
+
+  postgres-manager:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: managerdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5437:5432"
+    volumes:
+      - manager_data:/var/lib/postgresql/data
+
+  postgres-catalog:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: catalogdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5438:5432"
+    volumes:
+      - catalog_data:/var/lib/postgresql/data
+
+  postgres-order:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: orderdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5439:5432"
+    volumes:
+      - order_data:/var/lib/postgresql/data
+
+  postgres-ship:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: shipdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5440:5432"
+    volumes:
+      - ship_data:/var/lib/postgresql/data
+
+  postgres-pay:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: paydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5441:5432"
+    volumes:
+      - pay_data:/var/lib/postgresql/data
+
+  postgres-comment-rate:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: commentratedb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5442:5432"
+    volumes:
+      - comment-rate_data:/var/lib/postgresql/data
+
+  postgres-recommender-ai:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: recommenderaidb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5443:5432"
+    volumes:
+      - recommender-ai_data:/var/lib/postgresql/data
+
 volumes:
   customer_data:
   book_data:
   cart_data:
+  staff_data:
+  manager_data:
+  catalog_data:
+  order_data:
+  ship_data:
+  pay_data:
+  comment-rate_data:
+  recommender-ai_data:

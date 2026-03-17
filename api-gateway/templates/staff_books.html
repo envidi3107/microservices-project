@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Book Management - BookStore</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+    a { text-decoration: none; color: inherit; }
+
+    nav {
+      background: #1a1a2e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+      height: 60px;
+      gap: 32px;
+    }
+    nav .brand { font-size: 1.2rem; font-weight: 700; margin-right: auto; }
+    nav a { font-size: 0.95rem; color: #c9d1d9; transition: color 0.15s; }
+    nav a:hover, nav a.active { color: #fff; }
+
+    main { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    h1 { font-size: 1.8rem; margin-bottom: 20px; color: #1a1a2e; }
+
+    .card { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; }
+    input[type="text"], input[type="number"], input[type="url"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+    
+    button { display: inline-block; background: #4f46e5; color: #fff; border: none; padding: 10px 20px; font-size: 1rem; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #4338ca; }
+    .btn-delete { background: #e53e3e; padding: 6px 12px; font-size: 0.9rem; }
+    .btn-delete:hover { background: #c53030; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e0e0e0; }
+    th { background: #f9fafb; font-weight: 600; color: #4b5563; }
+    
+    .message { margin-bottom: 16px; padding: 10px; border-radius: 4px; }
+    .message.success { background: #e6ffed; color: #22863a; border: 1px solid #cce8ce; }
+    .message.error { background: #ffeef0; color: #cb2431; border: 1px solid #f2c7cb; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">📚 BookStore Staff</span>
+  <a href="/books/">Customer View</a>
+  <a href="/staff/books/" class="active">Manage Books</a>
+</nav>
+
+<main>
+  <div class="card">
+    <h1>Add New Book</h1>
+    {% if message %}
+      <div class="message {{ message_type }}">
+        {{ message }}
+      </div>
+    {% endif %}
+
+    <form method="POST" action="/staff/books/">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input type="text" id="title" name="title" required placeholder="The Great Gatsby">
+        </div>
+        <div class="form-group">
+          <label for="author">Author</label>
+          <input type="text" id="author" name="author" required placeholder="F. Scott Fitzgerald">
+        </div>
+        <div class="form-group">
+          <label for="price">Price</label>
+          <input type="number" id="price" name="price" step="0.01" min="0" required placeholder="10.99">
+        </div>
+        <div class="form-group">
+          <label for="stock">Stock</label>
+          <input type="number" id="stock" name="stock" min="0" required placeholder="100">
+        </div>
+      </div>
+      <button type="submit" style="margin-top: 10px;">Add Book</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h1>Current Books Inventory</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for book in books %}
+        <tr>
+          <td>{{ book.id }}</td>
+          <td>{{ book.title }}</td>
+          <td>{{ book.author }}</td>
+          <td>${{ book.price }}</td>
+          <td>{{ book.stock }}</td>
+          <td>
+            <form method="POST" action="/staff/books/" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="book_id" value="{{ book.id }}">
+              <button type="submit" class="btn-delete" onclick="return confirm('Delete this book?');">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align: center; color: #888;">No books available. Add some above.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+</body>
+</html>

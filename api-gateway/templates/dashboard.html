@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – New Services Overview</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+    a { text-decoration: none; color: inherit; }
+
+    nav {
+      background: #1a1a2e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+      height: 60px;
+      gap: 32px;
+    }
+    nav .brand { font-size: 1.2rem; font-weight: 700; margin-right: auto; }
+    nav a { font-size: 0.95rem; color: #c9d1d9; transition: color 0.15s; }
+    nav a:hover, nav a.active { color: #fff; }
+    nav a.active { border-bottom: 2px solid #6c63ff; padding-bottom: 3px; }
+
+    main { max-width: 1200px; margin: 36px auto; padding: 0 20px; }
+    h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 12px; color: #1a1a2e; }
+    p.subtitle { color: #666; margin-bottom: 30px; font-size: 1.05rem; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 24px;
+    }
+
+    .service-card {
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .service-card h2 {
+      font-size: 1.25rem;
+      border-bottom: 2px solid #6c63ff;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+      color: #1a1a2e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .badge {
+      background: #eef2ff;
+      color: #4f46e5;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .data-list { list-style: none; }
+    .data-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .data-list li:last-child { border-bottom: none; }
+    .data-empty { color: #888; font-style: italic; font-size: 0.9rem; margin-top: 10px; }
+
+    .json-key { color: #d32f2f; font-weight: 600; }
+    .json-value { color: #1976d2; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">📚 BookStore Admin</span>
+  <a href="/books/">Books</a>
+  <a href="/dashboard/" class="active">Dashboard</a>
+</nav>
+
+<main>
+  <h1>Admin Services Dashboard</h1>
+  <p class="subtitle">Overview of data from all the new supporting microservices.</p>
+
+  <div class="dashboard-grid">
+    <!-- Revenue Section -->
+    <div class="service-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+      <h2 style="color: white; border-bottom: none; margin-bottom: 5px;">Total Revenue <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">${{ data.revenue }}</span></h2>
+      <p style="opacity: 0.9; margin-top: 5px;">From {{ data.orders|length }} total orders processed.</p>
+    </div>
+
+    <!-- Customers Section -->
+    <div class="service-card">
+      <h2>Registered Customers <span class="badge">{{ data.customers|length }} users</span></h2>
+      {% if data.customers %}
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem;">
+            <tr style="border-bottom: 2px solid #eee; text-align: left;">
+                <th style="padding: 8px;">ID</th>
+                <th style="padding: 8px;">Name</th>
+                <th style="padding: 8px;">Email</th>
+            </tr>
+            {% for c in data.customers %}
+            <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 8px;">#{{ c.id }}</td>
+                <td style="padding: 8px; font-weight: 500;">{{ c.name }}</td>
+                <td style="padding: 8px; color: #555;">{{ c.email }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+      {% else %}
+        <div class="data-empty">No customers found.</div>
+      {% endif %}
+    </div>
+
+    <!-- Staff Section -->
+    <div class="service-card">
+      <h2>Staff Accounts <span class="badge">{{ data.staff|length }} staff</span></h2>
+      {% if data.staff %}
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem;">
+            <tr style="border-bottom: 2px solid #eee; text-align: left;">
+                <th style="padding: 8px;">ID</th>
+                <th style="padding: 8px;">Name</th>
+                <th style="padding: 8px;">Role</th>
+            </tr>
+            {% for s in data.staff %}
+            <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 8px;">#{{ s.id }}</td>
+                <td style="padding: 8px; font-weight: 500;">{{ s.name }}</td>
+                <td style="padding: 8px; color: #555;">{{ s.role|default:"Staff" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+      {% else %}
+        <div class="data-empty">No staff accounts found.</div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

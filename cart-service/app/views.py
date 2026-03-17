@@ -42,3 +42,22 @@ class ViewCart(APIView):
         items = CartItem.objects.filter(cart=cart)
         serializer = CartItemSerializer(items, many=True)
         return Response(serializer.data)
+
+class UpdateDeleteCartItem(APIView):
+    def put(self, request, item_id):
+        item = CartItem.objects.filter(id=item_id).first()
+        if not item:
+            return Response({"error": "Item not found"}, status=404)
+        quantity = request.data.get("quantity")
+        if quantity is not None:
+            item.quantity = quantity
+            item.save()
+            return Response(CartItemSerializer(item).data)
+        return Response({"error": "Quantity required"}, status=400)
+
+    def delete(self, request, item_id):
+        item = CartItem.objects.filter(id=item_id).first()
+        if not item:
+            return Response({"error": "Item not found"}, status=404)
+        item.delete()
+        return Response(status=204)

@@ -125,6 +125,19 @@
     }
     .btn-checkout:hover { background: #574fd6; }
 
+    .btn-remove {
+      background: #fee2e2;
+      color: #ef4444;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-remove:hover { background: #fca5a5; }
+
     .empty { text-align: center; padding: 80px 0; color: #888; }
   </style>
 </head>
@@ -134,6 +147,7 @@
   <span class="brand">📚 BookStore</span>
   <a href="/books/">Books</a>
   <a href="#" class="active">🛒 Cart</a>
+  <a href="/dashboard/">⚙️ Dashboard</a>
 </nav>
 
 <main>
@@ -143,39 +157,53 @@
   </div>
 
   {% if items %}
-    <div class="cart-list">
+    <table class="cart-table">
+      <thead>
+        <tr>
+          <th>Book</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Subtotal</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
       {% for item in items %}
-      <div class="cart-item">
-        <div class="cart-item-icon">📖</div>
-        <div class="cart-item-info">
-          <div class="cart-item-title">
-            {% if item.book.title %}{{ item.book.title }}{% else %}Book #{{ item.book_id }}{% endif %}
-          </div>
-          {% if item.book.author %}
-            <div class="cart-item-author">{{ item.book.author }}</div>
-          {% endif %}
-          {% if item.book.price %}
-            <div class="cart-item-price">${{ item.book.price }}</div>
-          {% endif %}
-        </div>
-        <div class="cart-item-right">
-          <div class="cart-qty">× {{ item.quantity }}</div>
-          {% if item.book.price %}
-            <div class="cart-subtotal">
-              Subtotal: ${% widthratio item.quantity 1 item.book.price %}
-            </div>
-          {% endif %}
-        </div>
-      </div>
+        <tr>
+          <td>
+            <strong>{{ item.book.title }}</strong><br>
+            <span style="font-size:0.85rem; color:#666;">{{ item.book.author }}</span>
+          </td>
+          <td>${{ item.book.price }}</td>
+          <td>
+            <form method="POST" action="/cart/update/{{ item.id }}/" style="display:flex; align-items:center; gap:8px;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update">
+              <input type="hidden" name="customer_id" value="{{ customer_id }}">
+              <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.book.stock }}" style="width: 60px; padding: 4px;">
+              <button type="submit" style="padding: 4px 8px; font-size: 0.8rem; background: #6c63ff; color: white;">Update</button>
+            </form>
+          </td>
+          <td style="font-weight: 600;">${{ item.subtotal }}</td>
+          <td>
+            <form method="POST" action="/cart/update/{{ item.id }}/" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="customer_id" value="{{ customer_id }}">
+              <button type="submit" class="btn-remove">Remove</button>
+            </form>
+          </td>
+        </tr>
       {% endfor %}
-    </div>
+      </tbody>
+    </table>
 
     <div class="cart-summary">
       <div>
         <div class="total-label">Items in cart</div>
         <div class="total-count">{{ items|length }} item{{ items|length|pluralize }}</div>
       </div>
-      <button class="btn-checkout">Checkout</button>
+      <a href="/checkout/{{ customer_id }}/" class="btn-checkout">Checkout</a>
     </div>
   {% else %}
     <div class="empty">

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ book.title }} - BookStore</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #222; }
+    a { text-decoration: none; color: inherit; }
+
+    nav {
+      background: #1a1a2e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+      height: 60px;
+      gap: 32px;
+    }
+    nav .brand { font-size: 1.2rem; font-weight: 700; margin-right: auto; }
+    nav a { font-size: 0.95rem; color: #c9d1d9; transition: color 0.15s; }
+    nav a:hover, nav a.active { color: #fff; }
+
+    main { max-width: 800px; margin: 36px auto; padding: 0 20px; }
+    
+    .btn-back { display: inline-block; margin-bottom: 20px; color: #6c63ff; font-weight: 600; font-size: 0.9rem;}
+    
+    .card { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px; }
+    
+    .book-header { display: flex; justify-content: space-between; align-items:flex-start; margin-bottom: 20px;}
+    .book-title { font-size: 2rem; color: #1a1a2e; margin-bottom: 4px; font-weight: 800;}
+    .book-author { font-size: 1.1rem; color: #666; }
+    .book-price { font-size: 1.6rem; color: #6c63ff; font-weight: 700; }
+    
+    .section-title { font-size: 1.3rem; margin-bottom: 16px; border-bottom: 2px solid #6c63ff; padding-bottom: 6px; display: inline-block; color: #1a1a2e; margin-top: 10px;}
+
+    .review-item { padding: 16px 0; border-bottom: 1px solid #eee; }
+    .review-item:last-child { border-bottom: none; }
+    .review-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; color: #555;}
+    .star-rating { color: #fbbf24; font-weight: bold; letter-spacing: 2px;}
+    
+    textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; font-family: inherit;}
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem;}
+    button { background: #4f46e5; color: #fff; border: none; padding: 10px 24px; font-size: 1rem; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #4338ca; }
+    
+    .message { margin-bottom: 16px; padding: 10px; border-radius: 4px; }
+    .message.success { background: #e6ffed; color: #22863a; border: 1px solid #cce8ce; }
+    .message.error { background: #ffeef0; color: #cb2431; border: 1px solid #f2c7cb; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">📚 BookStore</span>
+  <a href="/books/" class="active">Books</a>
+  <a href="/cart/1/">🛒 Cart</a>
+</nav>
+
+<main>
+  <a href="/books/" class="btn-back">← Back to Books</a>
+  
+  {% if message %}
+    <div class="message {{ message_type }}">
+      {{ message }}
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="book-header">
+      <div>
+        <h1 class="book-title">{{ book.title }}</h1>
+        <div class="book-author">By {{ book.author }}</div>
+      </div>
+      <div class="book-price">${{ book.price }}</div>
+    </div>
+    <div style="color: #666; font-size: 0.9rem;">
+      In stock: {{ book.stock }} units
+    </div>
+    
+    <form method="POST" action="/cart/add/" style="margin-top: 24px;">
+      {% csrf_token %}
+      <input type="hidden" name="book_id" value="{{ book.id }}">
+      <button type="submit" style="background: #10b981;">Add to Cart</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">Customer Reviews</h2>
+    
+    {% if reviews %}
+      <div style="margin-bottom: 30px;">
+        {% for review in reviews %}
+          <div class="review-item">
+            <div class="review-header">
+              <span>Customer #{{ review.customer_id }}</span>
+              <span class="star-rating">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                {% endfor %}
+              </span>
+            </div>
+            <p style="font-size: 0.95rem; line-height: 1.5; color: #333;">{{ review.comment }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: #888; font-style: italic; margin-bottom: 30px;">No reviews yet. Be the first to rate this book!</p>
+    {% endif %}
+
+    <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: #1a1a2e;">Write a Review</h3>
+    <form method="POST" action="/books/{{ book.id }}/">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="rating">Rating</label>
+        <select id="rating" name="rating" style="width: 150px;">
+          <option value="5">★★★★★ (5)</option>
+          <option value="4">★★★★☆ (4)</option>
+          <option value="3">★★★☆☆ (3)</option>
+          <option value="2">★★☆☆☆ (2)</option>
+          <option value="1">★☆☆☆☆ (1)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="comment">Comment</label>
+        <textarea id="comment" name="comment" rows="4" required placeholder="What did you think about this book?"></textarea>
+      </div>
+      <button type="submit">Submit Review</button>
+    </form>
+  </div>
+
+</main>
+
+</body>
+</html>
