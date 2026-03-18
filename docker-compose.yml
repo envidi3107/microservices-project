@@ -1,14 +1,57 @@
 version: "3.9"
 
 services:
+  # ─────────────── MESSAGE BROKER ───────────────
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────── AUTH SERVICE ───────────────
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8012:8000"
+    volumes:
+      - ./auth-service:/app
+    environment:
+      JWT_SECRET: "bookstore-super-secret-jwt-key-2024"
+      RUNNING_IN_DOCKER: "true"
+    depends_on:
+      - postgres-auth
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # ─────────────── API GATEWAY ───────────────
   api-gateway:
     build: ./api-gateway
     ports:
       - "8000:8000"
     volumes:
       - ./api-gateway:/app
+    environment:
+      RUNNING_IN_DOCKER: "true"
+      JWT_SECRET: "bookstore-super-secret-jwt-key-2024"
+      AUTH_SERVICE_URL: "http://auth-service:8000"
+      BOOK_SERVICE_URL: "http://book-service:8000"
+      CART_SERVICE_URL: "http://cart-service:8000"
+      CUSTOMER_SERVICE_URL: "http://customer-service:8000"
+      ORDER_SERVICE_URL: "http://order-service:8000"
+      COMMENT_RATE_SERVICE_URL: "http://comment-rate-service:8000"
+      STAFF_SERVICE_URL: "http://staff-service:8000"
     command: python manage.py runserver 0.0.0.0:8000
     depends_on:
+      - auth-service
       - customer-service
       - book-service
       - cart-service
@@ -21,6 +64,7 @@ services:
       - comment-rate-service
       - recommender-ai-service
 
+  # ─────────────── BUSINESS SERVICES ───────────────
   customer-service:
     build: ./customer-service
     ports:
@@ -48,38 +92,6 @@ services:
     depends_on:
       - postgres-cart
 
-  postgres-customer:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: customerdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
-    ports:
-      - "5433:5432"
-
-  postgres-book:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: bookdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
-    ports:
-      - "5434:5432"
-    volumes:
-      - book_data:/var/lib/postgresql/data
-
-  postgres-cart:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: cartdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
-    ports:
-      - "5435:5432"
-    volumes:
-      - cart_data:/var/lib/postgresql/data
-
-    
   staff-service:
     build: ./staff-service
     ports:
@@ -113,8 +125,14 @@ services:
       - "8007:8000"
     volumes:
       - ./order-service:/app
+    environment:
+      RUNNING_IN_DOCKER: "true"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      PAY_SERVICE_URL: "http://pay-service:8000"
+      SHIP_SERVICE_URL: "http://ship-service:8000"
     depends_on:
       - postgres-order
+      - rabbitmq
 
   ship-service:
     build: ./ship-service
@@ -122,8 +140,13 @@ services:
       - "8008:8000"
     volumes:
       - ./ship-service:/app
+    environment:
+      RUNNING_IN_DOCKER: "true"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      FORCE_FAIL: "false"
     depends_on:
       - postgres-ship
+      - rabbitmq
 
   pay-service:
     build: ./pay-service
@@ -131,8 +154,13 @@ services:
       - "8009:8000"
     volumes:
       - ./pay-service:/app
+    environment:
+      RUNNING_IN_DOCKER: "true"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      FORCE_FAIL: "false"
     depends_on:
       - postgres-pay
+      - rabbitmq
 
   comment-rate-service:
     build: ./comment-rate-service
@@ -151,6 +179,49 @@ services:
       - ./recommender-ai-service:/app
     depends_on:
       - postgres-recommender-ai
+
+  # ─────────────── DATABASES ───────────────
+  postgres-auth:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5444:5432"
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+
+  postgres-customer:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: customerdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5433:5432"
+
+  postgres-book:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: bookdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5434:5432"
+    volumes:
+      - book_data:/var/lib/postgresql/data
+
+  postgres-cart:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: cartdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5435:5432"
+    volumes:
+      - cart_data:/var/lib/postgresql/data
 
   postgres-staff:
     image: postgres:15
@@ -241,6 +312,7 @@ services:
       - recommender-ai_data:/var/lib/postgresql/data
 
 volumes:
+  auth_data:
   customer_data:
   book_data:
   cart_data:

@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install django djangorestframework requests psycopg2-binary
+RUN pip install django djangorestframework requests psycopg2-binary pika
 
 EXPOSE 8000
 

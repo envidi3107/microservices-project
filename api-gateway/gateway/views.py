@@ -1,7 +1,13 @@
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 import os
 import requests
+import logging
+import time
+
+logger = logging.getLogger(__name__)
 
 in_docker = os.environ.get("RUNNING_IN_DOCKER", False) or os.path.exists('/.dockerenv')
 
@@ -12,6 +18,7 @@ if in_docker:
     ORDER_SERVICE_URL = os.environ.get("ORDER_SERVICE_URL", "http://order-service:8000")
     COMMENT_RATE_SERVICE_URL = os.environ.get("COMMENT_RATE_SERVICE_URL", "http://comment-rate-service:8000")
     STAFF_SERVICE_URL = os.environ.get("STAFF_SERVICE_URL", "http://staff-service:8000")
+    AUTH_SERVICE_URL = os.environ.get("AUTH_SERVICE_URL", "http://auth-service:8000")
 else:
     BOOK_SERVICE_URL = os.environ.get("BOOK_SERVICE_URL", "http://localhost:8002")
     CART_SERVICE_URL = os.environ.get("CART_SERVICE_URL", "http://localhost:8003")
@@ -19,6 +26,10 @@ else:
     ORDER_SERVICE_URL = os.environ.get("ORDER_SERVICE_URL", "http://localhost:8007")
     COMMENT_RATE_SERVICE_URL = os.environ.get("COMMENT_RATE_SERVICE_URL", "http://localhost:8010")
     STAFF_SERVICE_URL = os.environ.get("STAFF_SERVICE_URL", "http://localhost:8004")
+    AUTH_SERVICE_URL = os.environ.get("AUTH_SERVICE_URL", "http://localhost:8012")
+
+# Simple in-memory request counter for /metrics
+_metrics = {"total_requests": 0, "total_errors": 0}
 
 
 DEFAULT_CUSTOMER_ID = 1
@@ -264,3 +275,65 @@ def dashboard(request):
         
     data["revenue"] = round(data["revenue"], 2)
     return render(request, "dashboard.html", {"data": data})
+
+
+# ─────────────── API ENDPOINTS (JWT-protected) ───────────────
+
+@csrf_exempt
+def api_auth_login(request):
+    """POST /api/auth/login/ — Proxy to auth-service login (no JWT required)."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    try:
+        resp = requests.post(f"{AUTH_SERVICE_URL}/login/", json=__import__('json').loads(request.body), timeout=5)
+        return JsonResponse(resp.json(), status=resp.status_code)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=503)
+
+
+@csrf_exempt
+def api_auth_register(request):
+    """POST /api/auth/register/ — Proxy to auth-service register (no JWT required)."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    try:
+        resp = requests.post(f"{AUTH_SERVICE_URL}/register/", json=__import__('json').loads(request.body), timeout=5)
+        return JsonResponse(resp.json(), status=resp.status_code)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=503)
+
+
+@csrf_exempt
+def api_orders(request):
+    """
+    GET/POST /api/orders/ — JWT-protected order creation proxy.
+    JWT validation is handled by JWTMiddleware before reaching this view.
+    """
+    import json
+    try:
+        if request.method == "GET":
+            resp = requests.get(f"{ORDER_SERVICE_URL}/orders/", timeout=5)
+        elif request.method == "POST":
+            data = json.loads(request.body)
+            # Attach authenticated user_id from JWT if not explicitly provided
+            if hasattr(request, 'user_id') and request.user_id and 'customer_id' not in data:
+                data['customer_id'] = request.user_id
+            resp = requests.post(f"{ORDER_SERVICE_URL}/orders/", json=data, timeout=15)
+        else:
+            return JsonResponse({"error": "Method not allowed"}, status=405)
+        return JsonResponse(resp.json(), status=resp.status_code, safe=False)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=503)
+
+
+def health_view(request):
+    """GET /health/ — Gateway health check."""
+    return JsonResponse({"status": "ok", "service": "api-gateway"})
+
+
+def metrics_view(request):
+    """GET /metrics/ — Simple gateway metrics."""
+    return JsonResponse({
+        "service": "api-gateway",
+        **_metrics,
+    })

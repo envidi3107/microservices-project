@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir django djangorestframework requests PyJWT
+RUN pip install --no-cache-dir django djangorestframework psycopg2-binary PyJWT
 
 EXPOSE 8000
 
